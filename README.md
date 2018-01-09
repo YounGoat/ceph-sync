@@ -29,7 +29,7 @@ progress.on('error', (err) => {
 	// ...
 });
 
-progress.on('end', () => {
+progress.on('end', (meta) => {
 	// Sychronization successfully finished.
 });
 ```

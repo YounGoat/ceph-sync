@@ -12,6 +12,7 @@ const MODULE_REQUIRE = 1
     , if2 = require('if2')
     , noda = require('noda')
     , Progress = require('jinang/Progress')
+    , cloneObject = require('jinang/cloneObject')
     
     /* in-package */
     , Marker = noda.inRequire('lib/Marker')
@@ -130,7 +131,19 @@ function fs2ceph(source, target, options) {
 
         // 同步失败次数。
         errors: 0,
+
+        // 创建（同步）成功的文件数目。
+        created: 0,
+
+        // 忽略（同步失败）的文件数目。
+        ignored: 0,
     };
+
+    // 触发 error / end 事件时，附带的统计数据。
+    let genReturnMeta = () => Object.assign(
+        {}, 
+        cloneObject(counter, [ 'errors', 'created', 'ignored' ])
+    );
 
     // ---------------------------
     // Main process.
@@ -206,13 +219,13 @@ function fs2ceph(source, target, options) {
             queue.waiting.unshift([cephname, pathname]);
             
             // 触发警告。
-            progress.emit('warning', err);
+            progress.emit('warning', err, genReturnMeta());
         }
         else {
             archive(cephname, 3); // 3 means ignored
 
             // 触发错误。
-            progress.emit('error', err);
+            progress.emit('error', err, genReturnMeta());
         }
 
         // 如果失败次数已达上限，则终止所有事务。
@@ -226,8 +239,14 @@ function fs2ceph(source, target, options) {
     let archive = (cephname, status) => {
         let i = queue.unarchived.findIndex((q) => q[0] == cephname);
 
+        let statusName = STATUS_NAMES[status];
+
+        // 更新计数。
+        // statusName := created | ignored
+        counter[statusName]++;
+
         // 触发事件。
-        progress.emit(STATUS_NAMES[status], { name: cephname });
+        progress.emit(statusName, { name: cephname });
         
         // 如果在待归档队列中未排在首位，则更新其状态。            
         if (i > 0) {
@@ -247,7 +266,7 @@ function fs2ceph(source, target, options) {
             progress.emit('moveon', markup);
 
             if (registerFinished && queue.unarchived.length == 0) {
-                progress.emit('end');
+                progress.emit('end', genReturnMeta());
             }
         }
         
@@ -267,6 +286,13 @@ function fs2ceph(source, target, options) {
             return true;
         }
     };   
+
+    let on_register_finished = () => {
+        registerFinished = true;
+        if (counter.registered == 0) {
+            progress.emit('end', genReturnMeta());
+        }
+    };
 
     // 深度优先，遍历目录。
     let started = false;
@@ -307,20 +333,22 @@ function fs2ceph(source, target, options) {
                     }
                 }
             }
-            if (parentCephNamePieces.length == 0) registerFinished = true;
+            if (parentCephNamePieces.length == 0) on_register_finished();
         });
     };
-
-    if (options.names) {
-        options.names.forEach(name => {
-            let realpath = path.resolve(source.path, name);
-            register(name, realpath);
-        });
-        registerFinished = true;
-    }
-    else {
-        run_sync(source.path, []);
-    }
+    
+    process.nextTick(() => {
+        if (options.names) {
+            options.names.forEach(name => {
+                let realpath = path.resolve(source.path, name);
+                register(name, realpath);
+            });
+            on_register_finished();
+        }
+        else {
+            run_sync(source.path, []);
+        }
+    });
 
     return progress;
 }

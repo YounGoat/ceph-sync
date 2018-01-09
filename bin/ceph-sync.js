@@ -115,6 +115,6 @@ progress.on('error', (err) => {
     fs.writeSync(log.error, `\n${err.message}`);
 });
 
-progress.on('end', () => {
-    console.log('-- END --');
+progress.on('end', (meta) => {
+    console.log(`-- END total ${meta.created} created and ${meta.ignored} ignored --`);
 });
