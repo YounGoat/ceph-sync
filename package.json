@@ -1,0 +1,40 @@
+{
+    "bin": {
+        "ceph-sync": "bin/ceph-sync.js",
+        "cephsync": "bin/ceph-sync.js",
+        "ossync": "bin/ceph-sync.js"
+    },
+    "dependencies": {
+        "ceph": "^0.2.2",
+        "co": "^4.6.0",
+        "commandos": "^0.1.4",
+        "if2": "^0.2.0",
+        "jinang": "^0.4.0",
+        "noda": "^0.1.2"
+    },
+    "devDependencies": {},
+    "directories": {},
+    "scripts": {
+        "test": "mocha"
+    },
+    "name": "ceph-sync",
+    "version": "0.0.1",
+    "main": "index.js",
+    "keywords": [
+        "ceph-sync",
+        "object-storage",
+        "ceph",
+        "sync"
+    ],
+    "homepage": "https://github.com/YounGoat/ceph-sync",
+    "description": "Sync tool between LOCAL file system and REMOTE object storage.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/YounGoat/ceph-sync.git"
+    },
+    "author": {
+        "name": "YounGoat",
+        "email": "youngoat@163.com",
+        "url": "https://youngoat.github.io"
+    }
+}

@@ -1,0 +1,12 @@
+
+NAME
+    ceph-sync - Sync tool between local file system and remote object storage.
+    cephsync - Alias of command ceph-sync.
+    ossync - Alias of command ceph-sync. "ossync" means object storage sync.
+
+SYNOPSIS
+    ceph-sync --source <pathname> --target <pathname> [--retry <times>] [--resync-ignored]
+
+ARGUMENTS 
+    pathname
+    SHOULD be a directory, or a JSON file which stores the connection configs to the remote CEPH storage.
