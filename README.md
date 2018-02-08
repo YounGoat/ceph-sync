@@ -5,7 +5,7 @@ __Tool to sync contents between local file system and remote object storage.__
 [![ceph-sync's License](https://img.shields.io/npm/l/ceph-sync.svg)](https://www.npmjs.com/package/ceph-sync)
 [![latest version of ceph-sync](https://img.shields.io/npm/v/ceph-sync.svg)](https://www.npmjs.com/package/ceph-sync)
 
-This tool can achieve synchronizations as:
+This tool can achieve synchronizations as:
 *	directory A → container B
 *	container B → directory A
 *	container B → container C
