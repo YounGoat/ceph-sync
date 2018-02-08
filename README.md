@@ -15,6 +15,7 @@ Here, *directory* is located in local file system and made up of files and sub d
 ##	Table of contents
 
 *	[Get Started](#get-started)
+*	[Connection Config](#connection-config)
 *	[API](#api)
 
 ##	Links
@@ -146,7 +147,6 @@ Via the returned instance of `jinang/Progress`, we may learn about what happened
 		Arguments: Error *error*
 	*	Event: __end__  
 		Arugments: object *meta*
-
 
 *	__progress.abort__()  
 	Terminate the progress as soon as possible.
