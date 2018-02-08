@@ -10,14 +10,17 @@ const MODULE_REQUIRE = 1
     , path = require('path')
     
     /* NPM */
+    , ceph = require('ceph')
     , if2 = require('if2')
     , commandos = require('commandos')
     , noda = require('noda')
     , JsonFile = require('jinang/JsonFile')
     , Directory = require('jinang/Directory')
+    , cloneObject = require('jinang/cloneObject')
     
     /* in-package */
-    , cephSync = require('../index')
+
+    /* in-file */
     ;
 
 
@@ -31,12 +34,13 @@ const OPTIONS = commandos.parse({
             '--source -s [0] REQUIRED', 
             '--target -t [1] REQUIRED',
             '--retry',
-            '--resync-ignored',
+            '--start-over',
+            '--force',
         ]
     ],
     explicit: true,
     catcher: (err) => {
-        console.log(err.message);
+        console.error(err.message);
         console.log('Run "ceph-sync --help" to see detailed help info.');
         process.exit(1);
     }
@@ -57,64 +61,126 @@ else {
 OPTIONS.source = path.resolve(OPTIONS.source);
 OPTIONS.target = path.resolve(OPTIONS.target);
 
+let action = null;
+
+// No `try {} catch() {}` needed because the existence has been verified before.
+if (1) {
+    let 
+        source_exists  = fs.existsSync(OPTIONS.source),
+        target_exists  = fs.existsSync(OPTIONS.target),
+        source_is_file = source_exists && fs.statSync(OPTIONS.source).isFile(),
+        target_is_file = target_exists && fs.statSync(OPTIONS.target).isFile(),
+        source_is_dir  = source_exists && fs.statSync(OPTIONS.source).isDirectory(),
+        target_is_dir  = target_exists && fs.statSync(OPTIONS.target).isDirectory();
+
+
+    if (source_is_dir && target_is_file) {
+        action = 'fs2ceph';
+    }
+    else if (source_is_file && (!target_exists || target_is_dir)) {
+        action = 'ceph2fs';
+        if (!OPTIONS.force && target_is_dir && fs.readdirSync(OPTIONS.target).length > 0) {
+            console.log(`target directory already exists, use --force to overwrite`);
+            process.exit(1);
+        }
+    }
+    else if (source_is_file && target_is_file) {
+        action = 'ceph2ceph';
+    }
+    else {
+        console.error('source and target should be directory or a CEPH connection file. And at least one of them should be a CEPH connection file.');
+        process.exit(1);
+    }
+}
+
 // ---------------------------
 // Main Process.
 
+let createConn = pathname => {
+    try {
+        let conn = ceph.createConnection(JSON.parse(fs.readFileSync(pathname)));
+        if (!conn.get('container')) {
+            console.error(`container info missed in CEPH connection file: ${pathname}`);
+            process.exit(1);            
+        }
+        return conn;
+    }
+    catch (ex) {
+        console.error(`not a valid JSON file: ${pathname}`);
+        process.exit(1);
+    }
+};
+
+let source = OPTIONS.source, target = OPTIONS.target;
+if (action == 'ceph2fs' || action == 'ceph2ceph') {
+    source = createConn(source);
+}
+if (action == 'fs2ceph' || action == 'ceph2ceph') {
+    target = createConn(target);
+}
+
+// Tasks data in user profile.
 let commandHomepath = path.join(os.homedir(), '.ceph-sync');
 let tasksJF = new JsonFile(path.join(commandHomepath, 'tasks.json'));
 
-let cephConnJson = JSON.parse(fs.readFileSync(OPTIONS.target));
-let source = OPTIONS.source;
-
-let taskIdText = `${JSON.stringify(cephConnJson)}:${OPTIONS.source}`;
+let taskIdText = `${JSON.stringify(source)}:${JSON.stringify(target)}`;
 let taskId = crypto.createHash('md5').update(taskIdText).digest('hex');
 
 if (!tasksJF.json[taskId]) {
-    tasksJF.json[taskId] = {
-        'source': OPTIONS.source,
-        'target': OPTIONS.target,
+    tasksJF.json[taskId] = { 
+        source: OPTIONS.source, 
+        target: OPTIONS.target,
     };
 }
 let task = tasksJF.json[taskId];
-let progress = cephSync.fs2ceph(source, cephConnJson, { 
-    marker : task.marker,
+
+// require('../ceph2ceph')
+// require('../ceph2fs')
+// require('../fs2ceph')
+let runner = noda.inRequire(`${action}`);
+
+let progress = runner(source, target, { 
+    marker : OPTIONS['start-over'] ? null : task.marker,
     retry  : OPTIONS.retry,
-    mapper : name => 'ares/' + name,
+    // mapper : name => 'copy/' + name,
 });
 
 let dir = new Directory(commandHomepath);
-let log = {
-    success : dir.open(`logs/${taskId}/success.log`, 'a'), 
-    error   : dir.open(`logs/${taskId}/error.log`, 'a'),
-    ignore  : dir.open(`logs/${taskId}/ignore.log`, 'a')
+let logpath = {
+    success : `logs/${taskId}/success.log`, 
+    error   : `logs/${taskId}/error.log`,
+    ignore  : `logs/${taskId}/ignore.log`,
 };
+let log = cloneObject(logpath, (name, pathname) => [ name, dir.open(pathname, 'a') ] );
 
 progress.on('created', (obj) => {
-    console.log('CREATED', obj.name);
+    console.log('[ CREATED ]', obj.name);
     fs.writeSync(log.success, `\n${obj.name}`);
 });
 
 progress.on('moveon', (marker) => {
     task.marker = marker;
     tasksJF.save();
-    console.log('MOVEON', marker);
+    console.log('[ MOVEON  ]', marker);
 });
 
 progress.on('ignored', (obj) => {
-    console.log('IGNORED', obj.name);
+    console.log('[ IGNORED ]', obj.name);
     fs.writeSync(log.ignore, `\n${obj.name}`);
 });
 
 progress.on('warning', (err) => {
-    console.log('WARNING', err.toString());
+    console.log('[ WARNING ]', err.toString());
     fs.writeSync(log.error, `\n${err.message}`);
 });
 
 progress.on('error', (err) => {
-    console.log('ERROR', err.toString());
+    console.log('[ ERROR ]', err.toString());
     fs.writeSync(log.error, `\n${err.message}`);
 });
 
 progress.on('end', (meta) => {
-    console.log(`-- END total ${meta.created} created and ${meta.ignored} ignored --`);
+    console.log('-- END --');
+    console.log(`total ${meta.created} created and ${meta.ignored} ignored`);
+    console.log(`more logs in ${path.join(commandHomepath, 'logs', taskId)}`);
 });

@@ -5,8 +5,24 @@ NAME
     ossync - Alias of command ceph-sync. "ossync" means object storage sync.
 
 SYNOPSIS
-    ceph-sync --source <pathname> --target <pathname> [--retry <times>] [--resync-ignored]
+    ceph-sync --source <pathname> --target <pathname> [--retry <times>] 
+    [--start-over] [--force]
 
 ARGUMENTS 
-    pathname
-    SHOULD be a directory, or a JSON file which stores the connection configs to the remote CEPH storage.
+    --source <pathname>
+    --target <pathname>
+    Here, "pathname" SHOULD be a directory, or a JSON file which stores the 
+    connection configs to the remote CEPH storage, in which "container" is 
+    necessary. And at least one of --source and --target SHOULD represent a 
+    remote CEPH storage.
+
+    --retry <times>
+    Times to retry when error occurs in some step.
+
+    --start-over
+    Start over, ignoring the mark which indicates the position last 
+    synchronization moved on.
+
+    --force
+    Run even if the target directory already exists and not empty. Only 
+    available when sync from remote storage to local file system.
