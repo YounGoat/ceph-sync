@@ -6,7 +6,7 @@ NAME
 
 SYNOPSIS
     ceph-sync --source <pathname> --target <pathname> [--retry <times>] 
-    [--start-over] [--force]
+    [--start-over] [--force] [--mapper <js-pathname>]
 
 ARGUMENTS 
     --source <pathname>
@@ -26,3 +26,7 @@ ARGUMENTS
     --force
     Run even if the target directory already exists and not empty. Only 
     available when sync from remote storage to local file system.
+
+    --mapper <js-pathname>
+    An Node.js module which transforms source object / file name to target 
+    object / file name.

@@ -23,7 +23,6 @@ const MODULE_REQUIRE = 1
     /* in-file */
     ;
 
-
 // ---------------------------
 // Command line options validation.
 
@@ -33,6 +32,7 @@ const OPTIONS = commandos.parse({
         [ 
             '--source -s [0] REQUIRED', 
             '--target -t [1] REQUIRED',
+            '--mapper NOT NULLABLE',
             '--retry',
             '--start-over',
             '--force',
@@ -58,6 +58,7 @@ else {
     OPTIONS.retry = parseInt(OPTIONS.retry);
 }
 
+if (OPTIONS.mapper) OPTIONS.mapper = path.resolve(OPTIONS.mapper);
 OPTIONS.source = path.resolve(OPTIONS.source);
 OPTIONS.target = path.resolve(OPTIONS.target);
 
@@ -96,6 +97,7 @@ if (1) {
 // ---------------------------
 // Main Process.
 
+// Create CEPH connections.
 let createConn = pathname => {
     try {
         let conn = ceph.createConnection(JSON.parse(fs.readFileSync(pathname)));
@@ -119,11 +121,30 @@ if (action == 'fs2ceph' || action == 'ceph2ceph') {
     target = createConn(target);
 }
 
-// Tasks data in user profile.
+// Load mapper module.
+let mapper = null;
+if (OPTIONS.mapper) {
+    let pathname = OPTIONS.mapper;
+    try {
+        mapper = require(pathname);
+    } catch(ex) {
+        console.error(`failed to load mapper module: ${pathname}`);
+        console.error('--------');
+        console.error(ex);
+        process.exit(1);
+    }
+
+    if (typeof mapper != 'function') {
+        console.error(`mapper should be a function: ${pathname}`);
+        process.exit(1);
+    }
+}
+
+// Get task data from user profile.
 let commandHomepath = path.join(os.homedir(), '.ceph-sync');
 let tasksJF = new JsonFile(path.join(commandHomepath, 'tasks.json'));
 
-let taskIdText = `${JSON.stringify(source)}:${JSON.stringify(target)}`;
+let taskIdText = `${JSON.stringify(OPTIONS.source)}:${JSON.stringify(OPTIONS.target)}:${mapper}`;
 let taskId = crypto.createHash('md5').update(taskIdText).digest('hex');
 
 if (!tasksJF.json[taskId]) {
@@ -142,7 +163,7 @@ let runner = noda.inRequire(`${action}`);
 let progress = runner(source, target, { 
     marker : OPTIONS['start-over'] ? null : task.marker,
     retry  : OPTIONS.retry,
-    // mapper : name => 'copy/' + name,
+    mapper,
 });
 
 let dir = new Directory(commandHomepath);
