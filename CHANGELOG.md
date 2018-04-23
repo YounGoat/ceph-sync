@@ -2,6 +2,11 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.2.0] - Apr 23rd, 2018
+
+*   Dependencies upgraded.
+*   Command options `--source-container` and `--target-container` accepted.
+
 ##	[0.1.2] - Feb 9th, 2018
 
 *	`--mapper` option added in CLI mode.

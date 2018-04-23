@@ -30,8 +30,11 @@ const OPTIONS = commandos.parse({
     groups: [
         [ '--help -h [0:=*help] REQUIRED' ],
         [ 
-            '--source -s [0] REQUIRED', 
+            '--source -s [0] REQUIRED',
+            '--source-container --source-bucket NOT NULL', 
             '--target -t [1] REQUIRED',
+            '--target-container --target-bucket NOT NULL', 
+            '--container --bucket NOT NULL',
             '--mapper NOT NULLABLE',
             '--retry',
             '--start-over',
@@ -98,12 +101,15 @@ if (1) {
 // Main Process.
 
 // Create CEPH connections.
-let createConn = pathname => {
+let createConn = (pathname, container) => {
     try {
-        let conn = ceph.createConnection(JSON.parse(fs.readFileSync(pathname)));
+        let connJson = JSON.parse(fs.readFileSync(pathname));
+        if (container) connJson.container = container;
+
+        let conn = ceph.createConnection(connJson);
         if (!conn.get('container')) {
             console.error(`container info missed in CEPH connection file: ${pathname}`);
-            process.exit(1);            
+            process.exit(1);
         }
         return conn;
     }
@@ -115,10 +121,10 @@ let createConn = pathname => {
 
 let source = OPTIONS.source, target = OPTIONS.target;
 if (action == 'ceph2fs' || action == 'ceph2ceph') {
-    source = createConn(source);
+    source = createConn(source, OPTIONS['source-container'] || OPTIONS.container);
 }
 if (action == 'fs2ceph' || action == 'ceph2ceph') {
-    target = createConn(target);
+    target = createConn(target, OPTIONS['target-container'] || OPTIONS.container);
 }
 
 // Load mapper module.
@@ -144,7 +150,7 @@ if (OPTIONS.mapper) {
 let commandHomepath = path.join(os.homedir(), '.ceph-sync');
 let tasksJF = new JsonFile(path.join(commandHomepath, 'tasks.json'));
 
-let taskIdText = `${JSON.stringify(OPTIONS.source)}:${JSON.stringify(OPTIONS.target)}:${mapper}`;
+let taskIdText = `${source}:${target}:${mapper}`;
 let taskId = crypto.createHash('md5').update(taskIdText).digest('hex');
 
 if (!tasksJF.json[taskId]) {

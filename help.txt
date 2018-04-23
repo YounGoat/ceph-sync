@@ -5,8 +5,10 @@ NAME
     ossync - Alias of command ceph-sync. "ossync" means object storage sync.
 
 SYNOPSIS
-    ceph-sync --source <pathname> --target <pathname> [--retry <times>] 
-    [--start-over] [--force] [--mapper <js-pathname>]
+    ceph-sync --source <pathname> [--source-container <container-name>]
+    --target <pathname> [--target-container <container-name>]
+    [--container <container-name>]
+    [--retry <times>] [--start-over] [--force] [--mapper <js-pathname>]
 
 ARGUMENTS 
     --source <pathname>
@@ -15,6 +17,15 @@ ARGUMENTS
     connection configs to the remote CEPH storage, in which "container" is 
     necessary. And at least one of --source and --target SHOULD represent a 
     remote CEPH storage.
+
+    --source-container | --source-bucket <container-name>
+    Source container / bucket name.
+
+    --target-container | --target-bucket <container-name>
+    Target container / bucket name.
+
+    --container | --bucket <container-name>
+    If specified, the container name is applied to both source and target (if they are ceph connections).
 
     --retry <times>
     Times to retry when error occurs in some step.

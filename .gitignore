@@ -1,3 +1,6 @@
 
 _workspace
 node_modules
+
+# Added by YUPP, Mon Apr 23 2018 23:32:38 GMT+0800 (CST)
+package-lock.json
