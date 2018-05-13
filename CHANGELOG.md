@@ -2,7 +2,11 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
-##  [0.3.0] - May 13th, 2018
+##  [0.3.1] - May 13th, 2018
+
+*   Update version of dependency __[jinang](https://www.npmjs.com/package/jinang)__ which is necessary.
+
+##  [0.3.0] - May 13th, 2018 - @unpublished
 
 *   Command options `--fill` accepted.
 
