@@ -12,7 +12,7 @@ This tool can achieve synchronizations as:
 
 Here, *directory* is located in local file system and made up of files and sub directories, while *container* (also called *bucket* according to AWS S3) is vessel in remote CEPH storage where objects saved.
 
-##	Table of contents
+##	Table of Contents
 
 *	[Get Started](#get-started)
 *	[Connection Config](#connection-config)
@@ -134,22 +134,37 @@ ceph2ceph
 Via the returned instance of `jinang/Progress`, we may learn about what happened and then control the sync progress.
 
 *	__progress.on__(string *eventName*, Function *listener*)  
-	Following events are supported:
-	*	Event: __created__  
-		Arguments: object *meta*
-	*	Event: __moveon__  
-		Arguments: string *mark*
-	*	Event: __ignored__  
-		Arguments: object *meta*
-	*	Event: __warning__  
-		Arguments: Error *error*
-	*	Event: __error__  
-		Arguments: Error *error*
-	*	Event: __end__  
-		Arugments: object *meta*
+	See section [Events During Sync Progress](#events-during-sync-progress) for aviable events and their accompanied arguments.
 
 *	__progress.abort__()  
 	Terminate the progress as soon as possible.
 
 *	__progress.quit__()  
 	Quit the progress gracefully.
+
+###	Events During Sync Progress
+
+####	Event: '__created__'  
+*	Object *meta*
+
+####	Event: '__moveon__'  
+*	string *mark*
+
+####	Event: '__ignored__'  
+*	Object *meta*
+	
+####	Event: '__warning__'  
+*	Error *error*
+
+####	Event: '__error__'  
+*	Error *error*
+
+####	Event: '__end__'  
+*	Object *meta*  
+	```javascript
+	{
+		errors /* number */,
+		created /* number */, 
+		ignored /* number */,
+	}
+	```

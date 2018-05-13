@@ -17,10 +17,13 @@ const MODULE_REQUIRE = 1
     , JsonFile = require('jinang/JsonFile')
     , Directory = require('jinang/Directory')
     , cloneObject = require('jinang/cloneObject')
+    , sort = require('jinang/sort')
+    , uniq = require('jinang/uniq')
     
     /* in-package */
 
     /* in-file */
+    , NL = '\n'
     ;
 
 // ---------------------------
@@ -37,8 +40,9 @@ const OPTIONS = commandos.parse({
             '--container --bucket NOT NULL',
             '--mapper NOT NULLABLE',
             '--retry',
-            '--start-over',
-            '--force',
+            '--start-over NOT ASSIGNABLE',
+            '--force NOT ASSIGNABLE',
+            '--fill NOT ASSIGNABLE',
         ]
     ],
     explicit: true,
@@ -146,68 +150,102 @@ if (OPTIONS.mapper) {
     }
 }
 
-// Get task data from user profile.
-let commandHomepath = path.join(os.homedir(), '.ceph-sync');
-let tasksJF = new JsonFile(path.join(commandHomepath, 'tasks.json'));
-
 let taskIdText = `${source}:${target}:${mapper}`;
 let taskId = crypto.createHash('md5').update(taskIdText).digest('hex');
 
-if (!tasksJF.json[taskId]) {
-    tasksJF.json[taskId] = { 
-        source: OPTIONS.source, 
-        target: OPTIONS.target,
-    };
-}
-let task = tasksJF.json[taskId];
+// Get task data from user profile.
+let commandHomepath = path.join(os.homedir(), '.ceph-sync');
+let taskLogHomepath = path.join(commandHomepath, taskId);
+let taskJF = new JsonFile(path.join(taskLogHomepath, 'task.json'));
+Object.assign(taskJF.json, { 
+    source: source.toString(), 
+    target: target.toString(),
+});
+
+let taskDir = new Directory(taskLogHomepath);
+let logpath = {
+    success : 'success.log', 
+    error   : 'error.log',
+    ignore  : 'ignore.log',
+};
 
 // require('../ceph2ceph')
 // require('../ceph2fs')
 // require('../fs2ceph')
 let runner = noda.inRequire(`${action}`);
 
-let progress = runner(source, target, { 
-    marker : OPTIONS['start-over'] ? null : task.marker,
+let syncOptions = { 
     retry  : OPTIONS.retry,
     mapper,
-});
-
-let dir = new Directory(commandHomepath);
-let logpath = {
-    success : `logs/${taskId}/success.log`, 
-    error   : `logs/${taskId}/error.log`,
-    ignore  : `logs/${taskId}/ignore.log`,
 };
-let log = cloneObject(logpath, (name, pathname) => [ name, dir.open(pathname, 'a') ] );
+
+if (!OPTIONS['start-over'] && !OPTIONS.fill) {
+    syncOptions.marker = taskJF.json.marker;
+}
+
+// 补遗。
+if (OPTIONS.fill) {
+    // 从日志及日志备份中读取所有被忽略（同步失败）的对象名，并合为一处。
+    let lines = '';
+    [ 'ignore.log', 'ignore.bak' ].forEach(name => {
+        if (taskDir.exists(name)) {
+            lines += taskDir.read(name, 'utf8');
+        }        
+    });
+    lines = uniq(sort(lines.split(NL))).filter(name => name !== '');
+    
+    // 备份。
+    // 若命令执行中断，下次补遗操作仍将尝试全部记录。
+    taskDir.write('ignore.bak', lines.join(NL));
+
+    // 删除日志。
+    taskDir.rmfr('ignore.log');
+
+    syncOptions.names = lines;
+}
+
+let progress = runner(source, target, syncOptions);
+
+console.log(`logs in ${taskLogHomepath}`);
+console.log('-- START --');
+
+let log = cloneObject(logpath, (name, pathname) => [ name, taskDir.open(pathname, 'a') ] );
 
 progress.on('created', (obj) => {
     console.log('[ CREATED ]', obj.name);
-    fs.writeSync(log.success, `\n${obj.name}`);
+    fs.writeSync(log.success, NL + obj.name);
 });
 
 progress.on('moveon', (marker) => {
-    task.marker = marker;
-    tasksJF.save();
+    if (OPTIONS.fill) return;
+
     console.log('[ MOVEON  ]', marker);
+    taskJF.json.marker = marker;
+    taskJF.save();
 });
 
 progress.on('ignored', (obj) => {
     console.log('[ IGNORED ]', obj.name);
-    fs.writeSync(log.ignore, `\n${obj.name}`);
+    fs.writeSync(log.ignore, NL + obj.name);
 });
 
 progress.on('warning', (err) => {
     console.log('[ WARNING ]', err.toString());
-    fs.writeSync(log.error, `\n${err.message}`);
+    fs.writeSync(log.error, NL + err.message);
 });
 
 progress.on('error', (err) => {
     console.log('[ ERROR ]', err.toString());
-    fs.writeSync(log.error, `\n${err.message}`);
+    fs.writeSync(log.error, NL + err.message);
 });
 
 progress.on('end', (meta) => {
     console.log('-- END --');
     console.log(`total ${meta.created} created and ${meta.ignored} ignored`);
-    console.log(`more logs in ${path.join(commandHomepath, 'logs', taskId)}`);
+    console.log(`more logs in ${taskLogHomepath}`);
+
+    // 删除日志备份。
+    if (OPTIONS.fill) {
+        taskDir.rmfr('ignore.bak');
+    }
 });

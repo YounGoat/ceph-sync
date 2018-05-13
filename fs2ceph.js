@@ -32,7 +32,7 @@ const MODULE_REQUIRE = 1
  * @param  {object}     options           reserved options
  * 
  * @param  {string[]}  [options.names]             object names to be synchronised
- * @param  {string}    [options.mapper]            object names mapper
+ * @param  {Function}  [options.mapper]            object names mapper
  * @param  {number}    [options.maxCreated]        maximum creation allowed (the progress will be terminated)
  * @param  {number}    [options.maxCreating]       maximum cocurrent creating operation allowed
  * @param  {number}    [options.maxErrors]         maximum exceptions allowed (the progress will be terminated)

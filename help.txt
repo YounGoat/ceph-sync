@@ -8,7 +8,7 @@ SYNOPSIS
     ceph-sync --source <pathname> [--source-container <container-name>]
     --target <pathname> [--target-container <container-name>]
     [--container <container-name>]
-    [--retry <times>] [--start-over] [--force] [--mapper <js-pathname>]
+    [--retry <times>] [--start-over | --fill] [--force] [--mapper <js-pathname>]
 
 ARGUMENTS 
     --source <pathname>
@@ -33,6 +33,9 @@ ARGUMENTS
     --start-over
     Start over, ignoring the mark which indicates the position last 
     synchronization moved on.
+
+    --fill
+    To re-sync those which are ignored in previous sync progresses.
 
     --force
     Run even if the target directory already exists and not empty. Only 
