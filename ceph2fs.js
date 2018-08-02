@@ -147,14 +147,19 @@ function ceph2fs(source, target, options) {
     // 在本地文件系统中创建文件。
     let create = (cephname) => {
         counter.creating++;
-
-        let pathname = options.mapper ? options.mapper(cephname) : cephname;
-
         let onfinal = () => {
             counter.creating--;
             next();
         };
+        
+        if (cephname.endsWith('/')) {
+            archive(cephname, 3); // 3 means ignored
+            onfinal();
+            return;
+        }
 
+
+        let pathname = options.mapper ? options.mapper(cephname) : cephname;
         let ws = targetDir.createWriteStream(pathname);
         sourceConn.pullObject(cephname)
             .on('error', (err) => {

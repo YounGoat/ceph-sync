@@ -33,9 +33,9 @@ const OPTIONS = commandos.parse({
     groups: [
         [ '--help -h [0:=*help] REQUIRED' ],
         [ 
-            '--source -s [0] REQUIRED',
+            '--source -s [0] NOT NULL REQUIRED',
             '--source-container --source-bucket NOT NULL', 
-            '--target -t [1] REQUIRED',
+            '--target -t [1] NOT NULL REQUIRED',
             '--target-container --target-bucket NOT NULL', 
             '--container --bucket NOT NULL',
             '--mapper NOT NULLABLE',
