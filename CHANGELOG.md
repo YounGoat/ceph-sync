@@ -2,6 +2,10 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.4.1] - Aug 3rd, 2018
+
+*   New command option `--concurrency` accepted.
+
 ##  [0.4.0] - Aug 2nd, 2018
 
 *   Upgrade dependency version of `ceph`.

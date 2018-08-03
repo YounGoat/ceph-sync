@@ -43,6 +43,7 @@ const OPTIONS = commandos.parse({
             '--start-over NOT ASSIGNABLE',
             '--force NOT ASSIGNABLE',
             '--fill NOT ASSIGNABLE',
+            '--concurrency --co NOT NULL',
         ]
     ],
     explicit: true,
@@ -175,7 +176,8 @@ let logpath = {
 let runner = noda.inRequire(`${action}`);
 
 let syncOptions = { 
-    retry  : OPTIONS.retry,
+    retry       : OPTIONS.retry,
+    maxCreating : OPTIONS.concurrency,
     mapper,
 };
 

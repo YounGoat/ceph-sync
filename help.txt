@@ -8,7 +8,8 @@ SYNOPSIS
     ceph-sync --source <pathname> [--source-container <container-name>]
     --target <pathname> [--target-container <container-name>]
     [--container <container-name>]
-    [--retry <times>] [--start-over | --fill] [--force] [--mapper <js-pathname>]
+    [--concurrency <number>] [--retry <times>] [--start-over | --fill] [--force] 
+    [--mapper <js-pathname>]
 
 ARGUMENTS 
     --source <pathname>
@@ -26,6 +27,9 @@ ARGUMENTS
 
     --container | --bucket <container-name>
     If specified, the container name is applied to both source and target (if they are ceph connections).
+
+    --concurrency <number>
+    Number of multiple 
 
     --retry <times>
     Times to retry when error occurs in some step.
