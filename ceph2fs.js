@@ -51,6 +51,7 @@ function ceph2fs(source, target, options) {
     // Uniform & validate arguments.
 
     let sourceConn = lib.parse_ceph_argument(source);
+    let sourceContainer = sourceConn.get('container');
     let targetDir = new Directory(lib.parse_fs_argument(target).path);
     
     sourceConn.on('error', (err) => {
@@ -161,7 +162,7 @@ function ceph2fs(source, target, options) {
 
         let pathname = options.mapper ? options.mapper(cephname) : cephname;
         let ws = targetDir.createWriteStream(pathname);
-        sourceConn.pullObject(cephname)
+        sourceConn.pullObject({ name: cephname, container: sourceContainer })
             .on('error', (err) => {
                 on_create_error(err, cephname);
                 onfinal();

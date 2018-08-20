@@ -52,7 +52,9 @@ function ceph2ceph(source, target, options) {
     // Uniform & validate arguments.
 
     let sourceConn = lib.parse_ceph_argument(source);
+    let sourceContainer = sourceConn.get('container');
     let targetConn = lib.parse_ceph_argument(target);
+    let targetContainer = targetConn.get('container');
     
     sourceConn.on('error', (err) => {
         progress.emit('error', err);
@@ -150,8 +152,8 @@ function ceph2ceph(source, target, options) {
         counter.creating++;
 
         let targetCephname = options.mapper ? options.mapper(cephname) : cephname;
-        let rs = sourceConn.pullObject(cephname);
-        targetConn.createObject(targetCephname, rs, (err, response) => {
+        let rs = sourceConn.pullObject({ name: cephname, container: sourceContainer });
+        targetConn.createObject({ name: targetCephname, container: targetContainer}, rs, (err, response) => {
             if (err) {
                 on_create_error(err, cephname);
             }

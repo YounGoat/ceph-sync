@@ -2,6 +2,10 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.5.0] - Aug 20th, 2018
+
+*   Fixed the bug when connection's container is changed during sync progress.
+
 ##  [0.4.1] - Aug 3rd, 2018
 
 *   New command option `--concurrency` accepted.

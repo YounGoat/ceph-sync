@@ -27,7 +27,7 @@ const MODULE_REQUIRE = 1
  * @param  {string}     source            alias of source.path
  * 
  * @param  {object}     target            connection configurations of remote CEPH storage
- * @param  {ceph.Connection} target    instance of connection to remote CEPH storage
+ * @param  {ceph.Connection} target       instance of connection to remote CEPH storage
  * 
  * @param  {object}     options           reserved options
  * 
@@ -49,6 +49,7 @@ function fs2ceph(source, target, options) {
 
     source = lib.parse_fs_argument(source);
     target = lib.parse_ceph_argument(target);
+    let targetContainer = target.get('container');
     
     target.on('error', (err) => {
         progress.emit('error', err);
@@ -147,7 +148,7 @@ function fs2ceph(source, target, options) {
         else {
             realCephname = cephname;
         }
-        target.createObject(realCephname, fs.createReadStream(pathname))
+        target.createObject({ name: realCephname, container: targetContainer }, fs.createReadStream(pathname))
             .then(response => {
                 archive(cephname, 2); // 2 means created
             })
