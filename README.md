@@ -117,6 +117,12 @@ ceph2ceph
 *	Function __options.mapper__
 	Object name mapper.
 
+*	Function __options.filter__
+	Object name filter.
+
+*	Function __options.dualMetaFilter__
+	Filter with paramenter `(stat, meta)`.
+
 * 	number __options.maxCreated__  
 	Maximum creation allowed (then the progress will be terminated).
 
@@ -151,6 +157,9 @@ Via the returned instance of `jinang/Progress`, we may learn about what happened
 *	string *mark*
 
 ####	Event: '__ignored__'  
+*	Object *meta*
+
+####	Event: '__skipped__'  
 *	Object *meta*
 	
 ####	Event: '__warning__'  

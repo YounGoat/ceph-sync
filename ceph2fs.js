@@ -2,14 +2,9 @@
 
 const MODULE_REQUIRE = 1
     /* built-in */
-    , events = require('events')
-    , fs = require('fs')
-    , path = require('path')
     
     /* NPM */
     , ceph = require('ceph')
-    , co = require('co')
-    , if2 = require('if2')
     , noda = require('noda')
     , Progress = require('jinang/Progress')
     , cloneObject = require('jinang/cloneObject')

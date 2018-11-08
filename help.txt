@@ -10,6 +10,8 @@ SYNOPSIS
     [--container <container-name>]
     [--concurrency <number>] [--retry <times>] [--start-over | --fill] [--force] 
     [--mapper <js-pathname>]
+    [--filter <js-pathname>]
+    [--dual-meta-filter <js-pathname>]
 
 ARGUMENTS 
     --source <pathname>
@@ -26,10 +28,11 @@ ARGUMENTS
     Target container / bucket name.
 
     --container | --bucket <container-name>
-    If specified, the container name is applied to both source and target (if they are ceph connections).
+    If specified, the container name is applied to both source and target (if 
+    they are ceph connections).
 
     --concurrency <number>
-    Number of multiple 
+    Number of objects to be written in one batch.
 
     --retry <times>
     Times to retry when error occurs in some step.
@@ -46,5 +49,14 @@ ARGUMENTS
     available when sync from remote storage to local file system.
 
     --mapper <js-pathname>
-    An Node.js module which transforms source object / file name to target 
+    A Node.js module which transforms source object / file name to target 
     object / file name.
+
+    --filter <js-pathname>
+    An Node.js module which filter source objects / files by name.
+    Only available when the source is file system now.
+
+    --dual-meta-filter <js-pathname>
+    A Node.js module which filter objects depending on the meta info of source
+    and target object (if exists).
+    Only available when the source is file system now.

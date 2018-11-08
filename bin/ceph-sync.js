@@ -39,6 +39,8 @@ const OPTIONS = commandos.parse({
             '--target-container --target-bucket NOT NULL', 
             '--container --bucket NOT NULL',
             '--mapper NOT NULLABLE',
+            '--filter NOT NULLABLE',
+            '--dual-meta-filter NOT NULLABLE',
             '--retry',
             '--start-over NOT ASSIGNABLE',
             '--force NOT ASSIGNABLE',
@@ -66,13 +68,11 @@ else {
     OPTIONS.retry = parseInt(OPTIONS.retry);
 }
 
-if (OPTIONS.mapper) OPTIONS.mapper = path.resolve(OPTIONS.mapper);
 OPTIONS.source = path.resolve(OPTIONS.source);
 OPTIONS.target = path.resolve(OPTIONS.target);
 
 let action = null;
 
-// No `try {} catch() {}` needed because the existence has been verified before.
 if (1) {
     let 
         source_exists  = fs.existsSync(OPTIONS.source),
@@ -105,54 +105,77 @@ if (1) {
 // ---------------------------
 // Main Process.
 
-// Create CEPH connections.
-let createConn = (pathname, container) => {
-    try {
-        let connJson = JSON.parse(fs.readFileSync(pathname));
-        if (container) connJson.container = container;
-
-        let conn = ceph.createConnection(connJson);
-        if (!conn.get('container')) {
-            console.error(`container info missed in CEPH connection file: ${pathname}`);
-            process.exit(1);
-        }
-        return conn;
-    }
-    catch (ex) {
-        console.error(`not a valid JSON file: ${pathname}`);
-        process.exit(1);
-    }
+let syncOptions = { 
+    retry       : OPTIONS.retry,
+    maxCreating : OPTIONS.concurrency,
+    // , ... 注意：下面还有！ 
 };
 
-let source = OPTIONS.source, target = OPTIONS.target;
-if (action == 'ceph2fs' || action == 'ceph2ceph') {
-    source = createConn(source, OPTIONS['source-container'] || OPTIONS.container);
-}
-if (action == 'fs2ceph' || action == 'ceph2ceph') {
-    target = createConn(target, OPTIONS['target-container'] || OPTIONS.container);
-}
+// 为了实现可续传，我们需要一串包含描述该任务内容的实质性参数（影响该任务的结果，而非过程）。
+// 这些参数将构成任务的 taskId 。
+let taskId = {};
 
-// Load mapper module.
-let mapper = null;
-if (OPTIONS.mapper) {
-    let pathname = OPTIONS.mapper;
-    try {
-        mapper = require(pathname);
-    } catch(ex) {
-        console.error(`failed to load mapper module: ${pathname}`);
-        console.error('--------');
-        console.error(ex);
-        process.exit(1);
+let source = OPTIONS.source;
+let target = OPTIONS.target;    
+CREATE_CEPH_CONNECTIONS: {
+    let createConn = (pathname, container) => {
+        try {
+            let connJson = JSON.parse(fs.readFileSync(pathname));
+            if (container) connJson.container = container;
+
+            let conn = ceph.createConnection(connJson);
+            if (!conn.get('container')) {
+                console.error(`container info missed in CEPH connection file: ${pathname}`);
+                process.exit(1);
+            }
+            return conn;
+        }
+        catch (ex) {
+            console.error(`not a valid JSON file: ${pathname}`);
+            process.exit(1);
+        }
+    };
+
+    if (action == 'ceph2fs' || action == 'ceph2ceph') {
+        source = createConn(source, OPTIONS['source-container'] || OPTIONS.container);
+    }
+    if (action == 'fs2ceph' || action == 'ceph2ceph') {
+        target = createConn(target, OPTIONS['target-container'] || OPTIONS.container);
     }
 
-    if (typeof mapper != 'function') {
-        console.error(`mapper should be a function: ${pathname}`);
-        process.exit(1);
-    }
+    taskId.source = source;
+    taskId.target = target;
 }
 
-let taskIdText = `${source}:${target}:${mapper}`;
-let taskId = crypto.createHash('md5').update(taskIdText).digest('hex');
+LOAD_OUTER_MODULES: {
+    [ 'mapper', 'filter', 'dual-meta-filter' ].forEach(name => {
+        if (!OPTIONS[name]) return;
+
+        let camelCaseName = name.replace(/-./g, s => s.slice(1).toUpperCase());
+        let pathname = path.resolve(OPTIONS[name]);
+        
+        let fn;
+        try {
+            fn = require(pathname);
+        } catch(ex) {
+            console.error(`failed to load ${name} module: ${pathname}`);
+            console.error('--------');
+            console.error(ex);
+            process.exit(1);
+        }
+    
+        if (typeof fn != 'function') {
+            console.error(`${name} should be a function: ${pathname}`);
+            process.exit(1);
+        }
+
+        syncOptions[camelCaseName] = fn;
+        taskId[name] = fn.toString();
+    });     
+}
+
+// Transform the task id object to an MD5 string.
+taskId = crypto.createHash('md5').update(JSON.stringify(taskId)).digest('hex');
 
 // Get task data from user profile.
 let commandHomepath = path.join(os.homedir(), '.ceph-sync');
@@ -174,12 +197,6 @@ let logpath = {
 // require('../ceph2fs')
 // require('../fs2ceph')
 let runner = noda.inRequire(`${action}`);
-
-let syncOptions = { 
-    retry       : OPTIONS.retry,
-    maxCreating : OPTIONS.concurrency,
-    mapper,
-};
 
 if (!OPTIONS['start-over'] && !OPTIONS.fill) {
     syncOptions.marker = taskJF.json.marker;
@@ -231,13 +248,18 @@ progress.on('ignored', (obj) => {
     fs.writeSync(log.ignore, NL + obj.name);
 });
 
+progress.on('skipped', (obj) => {
+    console.log('[ SKIPPED ]', obj.name);
+    fs.writeSync(log.ignore, NL + obj.name);
+});
+
 progress.on('warning', (err) => {
     console.log('[ WARNING ]', err.toString());
     fs.writeSync(log.error, NL + err.message);
 });
 
 progress.on('error', (err) => {
-    console.log('[ ERROR ]', err.toString());
+    console.log('[ ERROR   ]', err.toString());
     fs.writeSync(log.error, NL + err.message);
 });
 
