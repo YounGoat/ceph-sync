@@ -2,6 +2,10 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.6.0] - Nov 7th, 2018
+
+*   New option `--dual-meta-filter` available on synchronising from filesystem to ceph storage.
+
 ##  [0.5.0] - Aug 20th, 2018
 
 *   Fixed the bug when connection's container is changed during sync progress.

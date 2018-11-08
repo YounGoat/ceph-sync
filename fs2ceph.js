@@ -8,8 +8,7 @@ const MODULE_REQUIRE = 1
     
     /* NPM */
     , ceph = require('ceph')
-    , co = require('co')
-    , if2 = require('if2')
+    , undertake = require('undertake')
     , noda = require('noda')
     , Progress = require('jinang/Progress')
     , cloneObject = require('jinang/cloneObject')
@@ -33,6 +32,8 @@ const MODULE_REQUIRE = 1
  * 
  * @param  {string[]}  [options.names]             object names to be synchronised
  * @param  {Function}  [options.mapper]            object names mapper
+ * @param  {Function}  [options.filter]            object names filter
+ * @param  {Function}  [options.dualMetaFilter]    object metainfos (both local and remote) filter
  * @param  {number}    [options.maxCreated]        maximum creation allowed (the progress will be terminated)
  * @param  {number}    [options.maxCreating]       maximum cocurrent creating operation allowed
  * @param  {number}    [options.maxErrors]         maximum exceptions allowed (the progress will be terminated)
@@ -96,14 +97,16 @@ function fs2ceph(source, target, options) {
     // 上次同步点。
     let marker = new Marker(options.marker);
 
-    const STATUS_NAMES = [ 'waiting', 'creating', 'created', 'ignored' ];
+    const STATUS_NAMES = [ 'waiting', 'creating', 'created', 'ignored', 'skipped' ];
 
     // 队列。
     let queue = {
         // 等待同步的文件列表：[ [cephname, pathname] ]
         waiting: [],
 
-        // 未归档的同步文件状态列表：[ [ cephname, 0 (waiting) | 1 (creating) | 2 (created) | 3 (ignored) ] ]
+        // 未归档的同步文件状态列表：[ [ cephname, 0 (waiting) | 1 (creating) | 2 (created) | 3 (ignored) | 4 (skipped) ] ]
+        // ignored 状态表示文件应某种故障未同步成功；
+        // skipped 状态表示文件被过滤器（filter | metaFilter | dualMetaFilter）禁止同步。
         unarchived: [],
 
         // { 对象名 : 重试次数 }
@@ -142,24 +145,46 @@ function fs2ceph(source, target, options) {
     let create = (cephname, pathname) => {
         counter.creating++;
         let realCephname;
+        
         if (options.mapper) {
             realCephname = options.mapper(cephname);
         }
         else {
             realCephname = cephname;
         }
-        target.createObject({ name: realCephname, container: targetContainer }, fs.createReadStream(pathname))
-            .then(response => {
-                archive(cephname, 2); // 2 means created
-            })
-            .catch(err => {
-                on_create_error(err, cephname, pathname);
-            })
-            .then(() => {
-                counter.creating--;
-                next();
-            })
-            ;
+
+        let callback = ex => {
+            if (ex) {
+                on_create_error(ex, cephname, pathname);
+            }
+            counter.creating--;
+            next();
+        };
+
+        let runCreate = function*() {
+            yield target.createObject(cephOptions, fs.createReadStream(pathname));
+            archive(cephname, 2); // 2 means created
+        };
+        let run;
+        let cephOptions = { name: realCephname, container: targetContainer, suppressNotFoundError: true };
+
+        if (options.dualMetaFilter) {
+            run = function*() {
+                let stat = yield callback => fs.stat(pathname, callback);
+                let meta = yield target.readObjectMeta(cephOptions);
+
+                if (options.dualMetaFilter(stat, meta)) {
+                    yield runCreate();
+                }
+                else {
+                    archive(cephname, 4); // 4 means skipped
+                }
+            };
+        }
+        else {
+            run = runCreate;
+        }
+        undertake(run , callback);
     };
 
     // 调度队列，尝试执行下一个创建操作。
@@ -246,7 +271,7 @@ function fs2ceph(source, target, options) {
         else {
             let l = queue.unarchived.length;
             while(i+1 < l && queue.unarchived[i+1][1] >= 2) { 
-                // >= 2 means created OR ignored
+                // >= 2 means created OR ignored OR skipped
                 i++;
             }            
             let markup = queue.unarchived[i][0];
@@ -288,7 +313,7 @@ function fs2ceph(source, target, options) {
     // 深度优先，遍历目录。
     let started = false;
     let run = (dirname, parentCephNamePieces) => { 
-        return co(function*() {
+        return undertake(function*() {
             // Why not fs.readdirSync() ?
             // To avoid IO blocking.
             let fsnames = yield new Promise((resolve, reject) => {
