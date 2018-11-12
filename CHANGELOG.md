@@ -2,6 +2,15 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.6.1] - Nov 12th, 2018
+
+Some wonderful optimizations are made in this version:
+*   If filename contains no-utf8 characters, an exception will be thrown on running `fs2ceph()` in Linux. In this version, such files will be ignored and an event named __no-utf8-filename__ will be emitted. In cli mode, such cases will be output to log file named __no-utf8-filename.log__。
+*   If the waiting queue becomes longer and longer, `out of memory` exception may be thrown and the process will be terminated. So, a new option named `maxQueueing` with default value 100,000 is now accepted by `fs2ceph()`. When the ceil is touched, the waiting queue will be frozen in 1,000 ms (one second).
+
+Fixed bugs:
+*   In previous version, skipped filenames are stored in __ignore.log__ while they SHOULD be stored in __skipped.log__. Now this bug is fixed.
+
 ##  [0.6.0] - Nov 8th, 2018
 
 *   New option `--filter` and `--dual-meta-filter` available on synchronising from filesystem to ceph storage.

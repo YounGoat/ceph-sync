@@ -191,6 +191,8 @@ let logpath = {
     success : 'success.log', 
     error   : 'error.log',
     ignore  : 'ignore.log',
+    skipped : 'skipped.log',
+    'no-utf8-filename' : 'no-utf8-filename.log',
 };
 
 // require('../ceph2ceph')
@@ -250,7 +252,13 @@ progress.on('ignored', (obj) => {
 
 progress.on('skipped', (obj) => {
     console.log('[ SKIPPED ]', obj.name);
-    fs.writeSync(log.ignore, NL + obj.name);
+    fs.writeSync(log.skipped, NL + obj.name);
+});
+
+progress.on('no-utf8-filename', (obj) => {
+    let posname = obj.dirname + ':' + obj.filenameBuffer.toString('hex');
+    console.log('[ NO-UTF8-FILENAME ]', posname);
+    fs.writeSync(log['no-utf8-filename'], NL + posname);
 });
 
 progress.on('warning', (err) => {

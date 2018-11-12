@@ -12,6 +12,7 @@ const MODULE_REQUIRE = 1
     , noda = require('noda')
     , Progress = require('jinang/Progress')
     , cloneObject = require('jinang/cloneObject')
+    , sleep = require('jinang/sleep')
     
     /* in-package */
     , Marker = noda.inRequire('class/Marker')
@@ -36,6 +37,7 @@ const MODULE_REQUIRE = 1
  * @param  {Function}  [options.dualMetaFilter]    object metainfos (both local and remote) filter
  * @param  {number}    [options.maxCreated]        maximum creation allowed (the progress will be terminated)
  * @param  {number}    [options.maxCreating]       maximum cocurrent creating operation allowed
+ * @param  {number}    [options.maxQueueing]       maximum queue length allowed  
  * @param  {number}    [options.maxErrors]         maximum exceptions allowed (the progress will be terminated)
  * @param  {number}    [options.retry]             maximum retry times on exception for each object
  * 
@@ -59,6 +61,7 @@ function fs2ceph(source, target, options) {
     options = Object.assign({
         maxCreating : 10,
         maxCreated  : Number.MAX_SAFE_INTEGER,
+        maxQueueing : 100000,
         maxErrors   : Number.MAX_SAFE_INTEGER,
         retry       : 3,
     }, options);
@@ -306,7 +309,7 @@ function fs2ceph(source, target, options) {
             next();
             return true;
         }
-    };   
+    };
 
     let on_register_finished = () => {
         registerFinished = true;
@@ -321,18 +324,22 @@ function fs2ceph(source, target, options) {
         return undertake(function*() {
             // Why not fs.readdirSync() ?
             // To avoid IO blocking.
-            let fsnames = yield new Promise((resolve, reject) => {
-                fs.readdir(dirname, (err, names) => {
-                    names = names.sort((p, f) => p > f);
-                    resolve(names);
-                });
-            });
+            let fsnames = yield undertake.calling(fs.readdir, fs, dirname, 'buffer');
+            fsnames.sort();
 
             for (let i = 0; i < fsnames.length; i++) {
                 // 如果收到异常信号，则终止遍历。
                 if (stopRegister) return;
 
-                let fsname = fsnames[i];
+                let fsname = fsnames[i].toString('utf8');
+                if (!Buffer.from(fsname).equals(fsnames[i])) {
+                    progress.emit('no-utf8-filename', {
+                        dirname: parentCephNamePieces.join('/'),
+                        filenameBuffer: fsnames[i],
+                    });
+                    continue;
+                }
+
                 let cephnamePieces = parentCephNamePieces.concat(fsname);
                 let cephname = cephnamePieces.join('/');
                 
@@ -347,11 +354,7 @@ function fs2ceph(source, target, options) {
 
                     // Why not fs.statSync() ?
                     // To avoid IO blocking.
-                    let stats = yield new Promise((resolve, reject) => {
-                        fs.stat(realpath, (err, stats) => {
-                            resolve(stats);
-                        });
-                    });
+                    let stats = yield undertake.calling(fs.stat, fs, realpath);
                         
                     // 遇目录则递归遍历。
                     if (stats.isDirectory()) {
@@ -360,6 +363,10 @@ function fs2ceph(source, target, options) {
 
                     // 遇文件则直接同步（上载）。
                     else {
+                        // 如果等候队列长度超过限度，则暂停排队。
+                        while (queue.waiting.length >= options.maxQueueing) {
+                            yield sleep.promise(1000);
+                        }
                         register(cephname, realpath);
                     }
                 }
