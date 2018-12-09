@@ -167,6 +167,7 @@ function fs2ceph(source, target, options) {
         if (options.filter && !options.filter(cephname)) {
             archive(cephname, 4); // 4 means skipped
             callback();
+            return;
         }
 
         let runCreate = function*() {
@@ -288,9 +289,7 @@ function fs2ceph(source, target, options) {
             // 触发游标前移事件。
             progress.emit('moveon', markup);
 
-            if (registerFinished && queue.unarchived.length == 0) {
-                progress.emit('end', genReturnMeta());
-            }
+            try_end();
         }
         
     };
@@ -313,10 +312,15 @@ function fs2ceph(source, target, options) {
 
     let on_register_finished = () => {
         registerFinished = true;
-        if (counter.registered == 0) {
+        try_end();
+    };
+
+    let try_end = () => {
+        if (registerFinished && queue.unarchived.length == 0) {
+            console.log('--end--');
             progress.emit('end', genReturnMeta());
         }
-    };
+    }
 
     // 深度优先，遍历目录。
     let started = false;

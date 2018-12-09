@@ -2,6 +2,14 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.7.0] - Dec 9th, 2018
+
+*   Support `ceph-dual`.
+
+##  [0.6.2] - Dec 4th, 2018
+
+*   Fixed the bug on `fs2ceph()` when option `filter` exists.
+
 ##  [0.6.1] - Nov 12th, 2018
 
 Some wonderful optimizations are made in this version:
