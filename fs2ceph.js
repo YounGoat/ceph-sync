@@ -148,7 +148,7 @@ function fs2ceph(source, target, options) {
     let create = (cephname, pathname) => {
         counter.creating++;
         let realCephname;
-        
+
         if (options.mapper) {
             realCephname = options.mapper(cephname);
         }
@@ -376,8 +376,6 @@ function fs2ceph(source, target, options) {
                 }
             }
             if (parentCephNamePieces.length == 0) on_register_finished();
-        }).catch(err => {
-            console.log(err);
         });
     };
     

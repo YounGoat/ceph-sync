@@ -30,6 +30,7 @@ const LIST_LIMIT = 10;
  * @param  {object}     options           reserved options
  * 
  * @param  {string[]}  [options.names]             object names to be synchronised
+ * @param  {string}    [options.prefix]            object names' prefix
  * @param  {Function}  [options.mapper]            object names mapper
  * @param  {number}    [options.maxCreated]        maximum creation allowed (the progress will be terminated)
  * @param  {number}    [options.maxCreating]       maximum cocurrent creating operation allowed
@@ -300,7 +301,7 @@ function ceph2fs(source, target, options) {
 
         if (typeof retry == 'undefined') retry = maxListRetry;
 
-        sourceConn.findObjects({ marker, limit: LIST_LIMIT }, (err, metas) => {
+        sourceConn.findObjects({ marker, prefix: options.prefix, limit: LIST_LIMIT }, (err, metas) => {
             if (err) {
                 errorPlus();
                 if (retry > 0) run(--retry);

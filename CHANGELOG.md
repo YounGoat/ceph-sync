@@ -2,6 +2,14 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##	[0.8.1] - Jan 23rd, 2018
+
+*	Set default value to option `--concurrency`.
+
+##  [0.8.0] - Dec 10th, 2018
+
+*   New option `--prefix` available when the source is CEPH storage.
+
 ##  [0.7.0] - Dec 9th, 2018
 
 *   Support `ceph-dual`.

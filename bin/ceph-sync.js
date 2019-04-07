@@ -35,6 +35,7 @@ const OPTIONS = commandos.parse({
         [ 
             '--source -s [0] NOT NULL REQUIRED',
             '--source-container --source-bucket NOT NULL', 
+            '--prefix NOT NULL',
             '--target -t [1] NOT NULL REQUIRED',
             '--target-container --target-bucket NOT NULL', 
             '--container --bucket NOT NULL',
@@ -45,7 +46,7 @@ const OPTIONS = commandos.parse({
             '--start-over NOT ASSIGNABLE',
             '--force NOT ASSIGNABLE',
             '--fill NOT ASSIGNABLE',
-            '--concurrency --co NOT NULL',
+            '--concurrency --co NOT NULL DEFAULT(10)',
         ]
     ],
     explicit: true,
@@ -108,6 +109,7 @@ if (1) {
 let syncOptions = { 
     retry       : OPTIONS.retry,
     maxCreating : OPTIONS.concurrency,
+    prefix      : OPTIONS.prefix,
     // , ... 注意：下面还有！ 
 };
 

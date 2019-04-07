@@ -12,6 +12,7 @@ SYNOPSIS
     [--mapper <js-pathname>]
     [--filter <js-pathname>]
     [--dual-meta-filter <js-pathname>]
+    [--prefix <prefix>]
 
 ARGUMENTS 
     --source <pathname>
@@ -30,6 +31,10 @@ ARGUMENTS
     --container | --bucket <container-name>
     If specified, the container name is applied to both source and target (if 
     they are ceph connections).
+
+    --prefix <pathname>
+    Only objects whose names contain specified prefix will be sychronized. 
+    This option ONLY available when the source is CEPH.
 
     --concurrency <number>
     Number of objects to be written in one batch.
