@@ -317,7 +317,6 @@ function fs2ceph(source, target, options) {
 
     let try_end = () => {
         if (registerFinished && queue.unarchived.length == 0) {
-            console.log('--end--');
             progress.emit('end', genReturnMeta());
         }
     }

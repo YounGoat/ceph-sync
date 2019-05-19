@@ -9,7 +9,7 @@
         "ceph-dual": "^0.0.4",
         "commandos": "^0.3.1",
         "if2": "^0.2.0",
-        "jinang": "^0.22.0",
+        "jinang": "^0.26.0",
         "noda": "^0.5.0",
         "undertake": "^0.0.4"
     },
@@ -19,7 +19,7 @@
         "test": "mocha"
     },
     "name": "ceph-sync",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "main": "index.js",
     "keywords": [
         "ceph-sync",

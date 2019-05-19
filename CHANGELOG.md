@@ -2,7 +2,11 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
-##	[0.8.1] - Jan 23rd, 2018
+##  [0.8.2] - May 19th, 2019
+
+*   Upgrade dependency `jinang` to enable `.toPromise()` and `.final()` method of returned instance of `jinang/Progress`.
+
+##	[0.8.1] - Jan 23rd, 2019
 
 *	Set default value to option `--concurrency`.
 
