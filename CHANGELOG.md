@@ -2,6 +2,10 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
+##  [0.10.0] - Jan 5th, 2020
+
+*   Upgrade dependency `ceph` to 1.0.0, and `ceph-dual` to 0.1.0.
+
 ##  [0.8.2] - May 19th, 2019
 
 *   Upgrade dependency `jinang` to enable `.toPromise()` and `.final()` method of returned instance of `jinang/Progress`.
