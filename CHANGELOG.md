@@ -2,7 +2,11 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
-##  [0.10.0] - Jan 5th, 2020
+##	[0.10.0] - Apr 21st, 2020
+
+*	New option `--if-none-match` and `options.ifNoneMatch` added.
+
+##  [0.9.0] - Jan 5th, 2020
 
 *   Upgrade dependency `ceph` to 1.0.0, and `ceph-dual` to 0.1.0.
 
