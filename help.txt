@@ -13,6 +13,7 @@ SYNOPSIS
     [--filter <js-pathname>]
     [--dual-meta-filter <js-pathname>]
     [--prefix <prefix>]
+    [--if-none-match]
 
 ARGUMENTS 
     --source <pathname>
@@ -65,3 +66,9 @@ ARGUMENTS
     A Node.js module which filter objects depending on the meta info of source
     and target object (if exists).
     Only available when the source is file system now.
+
+    --if-none-match
+    Check etag firstly. 
+    If target object / file already exists and has same etag with source object / file,
+    keep it instead of doing replacement.
+    This option is only effective when sychronizing between two buckets.

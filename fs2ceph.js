@@ -132,6 +132,9 @@ function fs2ceph(source, target, options) {
 
         // 忽略（同步失败）的文件数目。
         ignored: 0,
+
+        // 跳过（不执行同步）的文件数目。
+        skipped: 0,
     };
 
     // 触发 error / end 事件时，附带的统计数据。
@@ -266,7 +269,7 @@ function fs2ceph(source, target, options) {
         let statusName = STATUS_NAMES[status];
 
         // 更新计数。
-        // statusName := created | ignored
+        // statusName := created | ignored | skipped
         counter[statusName]++;
 
         // 触发事件。

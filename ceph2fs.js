@@ -154,8 +154,7 @@ function ceph2fs(source, target, options) {
             onfinal();
             return;
         }
-
-
+        
         let pathname = options.mapper ? options.mapper(cephname) : cephname;
         let ws = targetDir.createWriteStream(pathname);
         sourceConn.pullObject({ name: cephname, container: sourceContainer })

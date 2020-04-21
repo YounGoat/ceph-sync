@@ -90,9 +90,9 @@ __ceph-sync__ offers three functions to achieve different tasks:
 *	jinang/Progress __ceph2fs__(object *sourceConn*, string *targetDir*, object *options*)
 *	jinang/Progress __fs2ceph__(string *sourceDir*, object *targetConn*, object *options*)
 
-1.	Here *2* is a homophone of *to*.   
-1.	*sourceConn* and *targetConn* may be an object containing [CEPH storage connection configuration](#connection-config), or an instance of [swift Connection](https://www.npmjs.com/package/ceph#osapiswift).  
-1.	The functions accept similar *options* argument, see section [Parameter `options`](#parameter-options) for details.
+1.	Here "2" is a homophone of "to".   
+1.	`sourceConn` and `targetConn` may be an object containing [CEPH storage connection configuration](#connection-config), or an instance of [swift Connection](https://www.npmjs.com/package/ceph#osapiswift).  
+1.	The functions accept similar `options` argument, see section [Parameter `options`](#parameter-options) for details.
 1.	The functions are all asynchronous and will return an instance of [jinang/Progress](https://www.npmjs.com/package/jinang#progress). Via the returned value, we may learn about and control the sync progress. See section [Get Into Sync Progress](#get-into-sync-progress) for details.
 
 Each function may be required solely:
@@ -114,14 +114,19 @@ ceph2ceph
 *	string[] __options.names__  
 	Object names to be synchronised.
 
-*	Function __options.mapper__
+*	Function __options.mapper__  
 	Object name mapper.
 
-*	Function __options.filter__
+*	Function __options.filter__  
 	Object name filter.
 
-*	Function __options.dualMetaFilter__
-	Filter with paramenter `(stat, meta)`.
+*	Function __options.dualMetaFilter__  
+	Filter with paramenter `(stat, meta)`.  
+	Only acceptable in `fs2ceph()`.
+
+*	boolean __options.ifNoneMatch__  
+	Check etag firstly. If target object / file already exists and has same etag with source object / file, keep it instead of doing replacement.  
+	This option is only effective in `ceph2ceph()`.
 
 * 	number __options.maxCreated__  
 	Maximum creation allowed (then the progress will be terminated).

@@ -46,6 +46,7 @@ const OPTIONS = commandos.parse({
             '--start-over NOT ASSIGNABLE',
             '--force NOT ASSIGNABLE',
             '--fill NOT ASSIGNABLE',
+            '--if-none-match NOT ASSIGNABLE',
             '--concurrency --co NOT NULL DEFAULT(10)',
         ]
     ],
@@ -110,6 +111,7 @@ let syncOptions = {
     retry       : OPTIONS.retry,
     maxCreating : OPTIONS.concurrency,
     prefix      : OPTIONS.prefix,
+    ifNoneMatch : OPTIONS['if-none-match'],
     // , ... 注意：下面还有！ 
 };
 
