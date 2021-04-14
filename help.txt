@@ -6,18 +6,17 @@ NAME
 
 SYNOPSIS
     ceph-sync --source <pathname> [--source-container <container-name>]
-    --target <pathname> [--target-container <container-name>]
-    [--container <container-name>]
-    [--concurrency <number>] [--retry <times>] [--start-over | --fill] [--force] 
-    [--mapper <js-pathname>]
-    [--filter <js-pathname>]
-    [--dual-meta-filter <js-pathname>]
-    [--prefix <prefix>]
-    [--if-none-match]
+        --target <pathname> [--target-container <container-name>]
+        [--container <container-name>]
+        [--concurrency <number>] [--retry <times>] [--start-over | --fill] [--force] 
+        [--mapper <js-pathname>]
+        [--filter <js-pathname>]
+        [--dual-meta-filter <js-pathname>]
+        [--prefix <prefix>]
+        [--if-none-match]
 
 ARGUMENTS 
-    --source <pathname>
-    --target <pathname>
+    --source | --target <pathname>
     Here, "pathname" SHOULD be a directory, or a JSON file which stores the 
     connection configs to the remote CEPH storage, in which "container" is 
     necessary. And at least one of --source and --target SHOULD represent a 

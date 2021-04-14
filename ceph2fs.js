@@ -40,6 +40,7 @@ const LIST_LIMIT = 10;
  * @return EventEmitter
  */
 function ceph2fs(source, target, options) {
+    
     // 指代整个同步过程。
     let progress = new Progress();
 

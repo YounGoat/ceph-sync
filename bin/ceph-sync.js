@@ -21,6 +21,7 @@ const MODULE_REQUIRE = 1
     , uniq = require('jinang/uniq')
     
     /* in-package */
+    , lib = noda.inRequireDir('lib')
 
     /* in-file */
     , NL = '\n'
@@ -59,8 +60,8 @@ const OPTIONS = commandos.parse({
 });
 
 if (OPTIONS.help) {
-    console.log(noda.inRead('help.txt', 'utf8'));
-    process.exit(0);
+    commandos.man(noda.inRead('help.txt', 'utf8'));
+    return;
 }
 
 if (OPTIONS.retry === true) {
@@ -122,29 +123,47 @@ let taskId = {};
 let source = OPTIONS.source;
 let target = OPTIONS.target;    
 CREATE_CEPH_CONNECTIONS: {
-    let createConn = (pathname, container) => {
+    let createConn = (pathname, container, name) => {
+        let connJson;
         try {
-            let connJson = JSON.parse(fs.readFileSync(pathname));
-            if (container) connJson.container = container;
-
-            let conn = ceph.createConnection(connJson);
-            if (!conn.get('container')) {
-                console.error(`container info missed in CEPH connection file: ${pathname}`);
-                process.exit(1);
-            }
-            return conn;
+            connJson = JSON.parse(fs.readFileSync(pathname));
         }
         catch (ex) {
             console.error(`not a valid JSON file: ${pathname}`);
             process.exit(1);
         }
+
+        /**
+         * @upate 2021-04-08
+         * Change/set default container/bucket of connection(s).
+         */
+        if (container) {
+            if (Array.isArray(connJson)) {
+                connJson.forEach(data => { data.container = container });
+            }
+            else {
+                connJson.container = container;
+            }
+        }
+
+        let conn = lib.parse_ceph_argument(connJson);
+        if (!conn.get('container')) {
+            console.error(`container info missed in CEPH connection file: ${pathname}`);
+            process.exit(1);
+        }
+        conn.on('error', ex => {
+            if (ex.action == 'AUTH') {
+                console.log(`${name} connection failed, ${ex.message}`);
+            }
+        });
+        return conn;        
     };
 
     if (action == 'ceph2fs' || action == 'ceph2ceph') {
-        source = createConn(source, OPTIONS['source-container'] || OPTIONS.container);
+        source = createConn(source, OPTIONS['source-container'] || OPTIONS.container, 'source');
     }
     if (action == 'fs2ceph' || action == 'ceph2ceph') {
-        target = createConn(target, OPTIONS['target-container'] || OPTIONS.container);
+        target = createConn(target, OPTIONS['target-container'] || OPTIONS.container, 'target');
     }
 
     taskId.source = source;
