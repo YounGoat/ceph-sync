@@ -20,7 +20,7 @@
         "test": "mocha"
     },
     "name": "ceph-sync",
-    "version": "0.10.1",
+    "version": "0.10.2",
     "main": "index.js",
     "keywords": [
         "ceph-sync",
