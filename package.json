@@ -5,9 +5,9 @@
         "ossync": "bin/ceph-sync.js"
     },
     "dependencies": {
-        "ceph": "^1.1.3",
-        "ceph-dual": "^0.1.0",
-        "commandos": "^0.8.0",
+        "ceph": "^1.2.1",
+        "ceph-dual": "^0.1.1",
+        "commandos": "^0.10.1",
         "if2": "^0.2.0",
         "jinang": "^0.26.0",
         "noda": "^0.5.0",
@@ -19,7 +19,7 @@
         "test": "mocha"
     },
     "name": "ceph-sync",
-    "version": "0.11.0",
+    "version": "0.11.1",
     "main": "index.js",
     "keywords": [
         "ceph-sync",
