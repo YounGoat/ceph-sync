@@ -2,7 +2,10 @@
 
 Notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning 2.0.0](http://semver.org/).
 
-##	[0.11.0] - 2021-04-14
+##	[0.11.0] - 2021-05-12
+
+*	Upgrade all dependencies.  
+	升级所有依赖模块的版本。
 
 *	Display online manual with `commandos.man()`.  
 	依赖 `commandos.man()` 方法展示联机帮助信息。
